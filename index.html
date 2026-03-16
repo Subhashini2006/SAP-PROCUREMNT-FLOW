@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ProcureFlow – Enterprise Procurement</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+</head>
+<body class="light">
+
+<!-- ==================== LANDING PAGE ==================== -->
+<div id="page-home" class="page active">
+  <nav class="landing-nav">
+    <div class="brand">⬡ ProcureFlow</div>
+    <div class="nav-actions">
+      <button onclick="showAuth('login','company')" class="btn-outline">Company Login</button>
+      <button onclick="showAuth('login','vendor')" class="btn-primary">Vendor Login</button>
+    </div>
+  </nav>
+  <div class="hero">
+    <div class="hero-content">
+      <span class="badge">Enterprise Procurement Platform</span>
+      <h1>Streamline Your<br/><span class="gradient-text">Procurement Process</span></h1>
+      <p>End-to-end procurement lifecycle management — from Purchase Requisition to Invoice Payment, all in one place.</p>
+      <div class="hero-btns">
+        <button onclick="showAuth('register','company')" class="btn-primary large">Get Started Free</button>
+        <button onclick="showAuth('login','company')" class="btn-outline large">Sign In</button>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="flow-steps">
+        <div class="flow-step">📋 Purchase Requisition</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">✅ PR Approval</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">📦 Purchase Order</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">🚚 Vendor Delivery</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">💳 Invoice Payment</div>
+      </div>
+    </div>
+  </div>
+  <div class="landing-stats">
+    <div class="stat-card"><div class="stat-num" id="hs-pr">0</div><div class="stat-label">Purchase Requisitions</div></div>
+    <div class="stat-card"><div class="stat-num" id="hs-po">0</div><div class="stat-label">Purchase Orders</div></div>
+    <div class="stat-card"><div class="stat-num" id="hs-vendor">0</div><div class="stat-label">Registered Vendors</div></div>
+    <div class="stat-card"><div class="stat-num" id="hs-paid">0</div><div class="stat-label">Invoices Paid</div></div>
+  </div>
+</div>
+
+<!-- ==================== AUTH MODAL ==================== -->
+<div id="auth-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAuth()">✕</button>
+    <div class="modal-logo">⬡ ProcureFlow</div>
+    <div class="auth-tabs">
+      <button id="tab-login" class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+      <button id="tab-register" class="auth-tab" onclick="switchTab('register')">Create Account</button>
+    </div>
+    <input type="hidden" id="auth-role" value="company"/>
+
+    <!-- Login Form -->
+    <form id="form-login" onsubmit="handleLogin(event)">
+      <div class="role-selector">
+        <button type="button" id="role-company" class="role-btn active" onclick="setRole('company')">🏢 Company</button>
+        <button type="button" id="role-vendor" class="role-btn" onclick="setRole('vendor')">🏭 Vendor</button>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="you@company.com" required/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Enter your password" required/>
+      </div>
+      <div id="login-error" class="error-msg hidden"></div>
+      <button type="submit" class="btn-primary full">Sign In</button>
+      <p class="auth-switch">Don't have an account? <a onclick="switchTab('register')">Create one</a></p>
+    </form>
+
+    <!-- Register Form -->
+    <form id="form-register" class="hidden" onsubmit="handleRegister(event)">
+      <div class="role-selector">
+        <button type="button" id="rrole-company" class="role-btn active" onclick="setRegRole('company')">🏢 Company</button>
+        <button type="button" id="rrole-vendor" class="role-btn" onclick="setRegRole('vendor')">🏭 Vendor</button>
+      </div>
+      <input type="hidden" id="reg-role" value="company"/>
+      <div class="form-group">
+        <label>Full Name / Company Name</label>
+        <input type="text" id="reg-name" placeholder="Acme Corporation" required/>
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="reg-email" placeholder="you@company.com" required/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="Minimum 6 characters" required minlength="6"/>
+      </div>
+      <div class="form-group" id="vendor-cat-group" style="display:none">
+        <label>Vendor Category</label>
+        <select id="reg-category">
+          <option value="IT">IT & Technology</option>
+          <option value="Office">Office Supplies</option>
+          <option value="Logistics">Logistics</option>
+          <option value="Manufacturing">Manufacturing</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div id="reg-error" class="error-msg hidden"></div>
+      <button type="submit" class="btn-primary full">Create Account</button>
+      <p class="auth-switch">Already have an account? <a onclick="switchTab('login')">Sign in</a></p>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== COMPANY DASHBOARD ==================== -->
+<div id="page-company" class="page hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">⬡ ProcureFlow</div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" onclick="showSection('dash')" data-section="dash">📊 Dashboard</a>
+      <a class="nav-item" onclick="showSection('pr')" data-section="pr">📋 Purchase Requisitions</a>
+      <a class="nav-item" onclick="showSection('po')" data-section="po">📦 Purchase Orders</a>
+      <a class="nav-item" onclick="showSection('vendors')" data-section="vendors">🏭 Vendors</a>
+      <a class="nav-item" onclick="showSection('messages')" data-section="messages">💬 Messages <span id="msg-badge" class="badge-dot hidden"></span></a>
+
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="company-avatar">A</div>
+        <div class="user-details">
+          <div class="user-name" id="company-name">Admin</div>
+          <div class="user-role">Company Admin</div>
+        </div>
+      </div>
+      <div class="sidebar-actions">
+        <button onclick="toggleTheme()" class="icon-btn" title="Toggle Theme">🌙</button>
+        <button onclick="logout()" class="icon-btn" title="Logout">🚪</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-right">
+        <div class="notif-wrap">
+          <button class="icon-btn" onclick="toggleNotif()">🔔 <span id="notif-count" class="notif-badge hidden">0</span></button>
+          <div id="notif-panel" class="notif-panel hidden">
+            <div class="notif-header">Notifications <button onclick="clearNotifs()">Clear all</button></div>
+            <div id="notif-list"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Dashboard Section -->
+    <section id="sec-dash" class="section active">
+      <div class="kpi-grid">
+        <div class="kpi-card blue"><div class="kpi-icon">📋</div><div class="kpi-info"><div class="kpi-num" id="kpi-pr">0</div><div class="kpi-label">Total PRs</div></div></div>
+        <div class="kpi-card green"><div class="kpi-icon">📦</div><div class="kpi-info"><div class="kpi-num" id="kpi-po">0</div><div class="kpi-label">Total POs</div></div></div>
+        <div class="kpi-card orange"><div class="kpi-icon">⏳</div><div class="kpi-info"><div class="kpi-num" id="kpi-pending">0</div><div class="kpi-label">Pending Approval</div></div></div>
+        <div class="kpi-card purple"><div class="kpi-icon">✅</div><div class="kpi-info"><div class="kpi-num" id="kpi-completed">0</div><div class="kpi-label">Completed</div></div></div>
+      </div>
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-header"><h3>Recent PRs</h3><button onclick="showSection('pr')" class="link-btn">View All →</button></div>
+          <div id="dash-recent-pr"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Recent POs</h3><button onclick="showSection('po')" class="link-btn">View All →</button></div>
+          <div id="dash-recent-po"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PR Section -->
+    <section id="sec-pr" class="section hidden">
+      <div class="section-header">
+        <h2>Purchase Requisitions</h2>
+        <button class="btn-primary" onclick="openModal('modal-pr')">+ New PR</button>
+      </div>
+      <div class="filter-bar">
+        <input type="text" id="pr-search" placeholder="Search by material..." oninput="renderPRTable()"/>
+        <select id="pr-filter" onchange="renderPRTable()">
+          <option value="">All Status</option>
+          <option value="Pending">Pending</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Converted">Converted to PO</option>
+        </select>
+        <button class="btn-outline" onclick="exportCSV('pr')">⬇ Export CSV</button>
+      </div>
+      <div class="card"><div id="pr-table"></div></div>
+    </section>
+
+    <!-- PO Section -->
+    <section id="sec-po" class="section hidden">
+      <div class="section-header"><h2>Purchase Orders</h2></div>
+      <div class="filter-bar">
+        <input type="text" id="po-search" placeholder="Search PO..." oninput="renderPOTable()"/>
+        <select id="po-filter" onchange="renderPOTable()">
+          <option value="">All Status</option>
+          <option value="Sent to Vendor">Sent to Vendor</option>
+          <option value="Accepted">Accepted</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Goods Received">Goods Received</option>
+          <option value="Invoice Paid">Invoice Paid</option>
+        </select>
+        <button class="btn-outline" onclick="exportCSV('po')">⬇ Export CSV</button>
+      </div>
+      <div class="card"><div id="po-table"></div></div>
+    </section>
+
+    <!-- Vendors Section -->
+    <section id="sec-vendors" class="section hidden">
+      <div class="section-header"><h2>Vendor Management</h2></div>
+      <div class="card"><div id="vendor-table"></div></div>
+    </section>
+
+    <!-- Messages Section -->
+    <section id="sec-messages" class="section hidden">
+      <div class="chat-layout">
+        <div class="chat-list" id="company-chat-list"></div>
+        <div class="chat-window">
+          <div class="chat-header" id="chat-header">Select a vendor to chat</div>
+          <div class="chat-messages" id="chat-messages"></div>
+          <div class="chat-input-bar" id="chat-input-bar" style="display:none">
+            <input type="text" id="chat-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()"/>
+            <button class="btn-primary" onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+  </main>
+</div>
+
+<!-- ==================== VENDOR DASHBOARD ==================== -->
+<div id="page-vendor" class="page hidden">
+  <aside class="sidebar" id="vsidebar">
+    <div class="sidebar-brand">⬡ ProcureFlow</div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" onclick="showVSection('vdash')" data-vsection="vdash">📊 Dashboard</a>
+      <a class="nav-item" onclick="showVSection('vorders')" data-vsection="vorders">📦 My Orders</a>
+      <a class="nav-item" onclick="showVSection('vinvoice')" data-vsection="vinvoice">🧾 Invoices</a>
+      <a class="nav-item" onclick="showVSection('vmessages')" data-vsection="vmessages">💬 Messages</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="vendor-avatar">V</div>
+        <div class="user-details">
+          <div class="user-name" id="vendor-name">Vendor</div>
+          <div class="user-role">Vendor Account</div>
+        </div>
+      </div>
+      <div class="sidebar-actions">
+        <button onclick="toggleTheme()" class="icon-btn">🌙</button>
+        <button onclick="logout()" class="icon-btn">🚪</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <button class="hamburger" onclick="toggleVSidebar()">☰</button>
+      <div class="topbar-title" id="vtopbar-title">Dashboard</div>
+    </header>
+
+    <!-- Vendor Dashboard -->
+    <section id="vsec-vdash" class="section active">
+      <div class="kpi-grid">
+        <div class="kpi-card blue"><div class="kpi-icon">📦</div><div class="kpi-info"><div class="kpi-num" id="vkpi-total">0</div><div class="kpi-label">Total Orders</div></div></div>
+        <div class="kpi-card orange"><div class="kpi-icon">⏳</div><div class="kpi-info"><div class="kpi-num" id="vkpi-pending">0</div><div class="kpi-label">Pending</div></div></div>
+        <div class="kpi-card green"><div class="kpi-icon">✅</div><div class="kpi-info"><div class="kpi-num" id="vkpi-accepted">0</div><div class="kpi-label">Accepted</div></div></div>
+        <div class="kpi-card purple"><div class="kpi-icon">🧾</div><div class="kpi-info"><div class="kpi-num" id="vkpi-invoiced">0</div><div class="kpi-label">Invoiced</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Recent Orders</h3></div>
+        <div id="vdash-orders"></div>
+      </div>
+    </section>
+
+    <!-- Vendor Orders -->
+    <section id="vsec-vorders" class="section hidden">
+      <div class="section-header"><h2>My Orders</h2></div>
+      <div class="card"><div id="vendor-orders-table"></div></div>
+    </section>
+
+    <!-- Vendor Invoices -->
+    <section id="vsec-vinvoice" class="section hidden">
+      <div class="section-header"><h2>Invoices</h2></div>
+      <div class="card"><div id="vendor-invoices-table"></div></div>
+    </section>
+
+    <!-- Vendor Messages -->
+    <section id="vsec-vmessages" class="section hidden">
+      <div class="chat-layout single-chat">
+        <div class="chat-window">
+          <div class="chat-header">Chat with Company Admin</div>
+          <div class="chat-messages" id="vendor-chat-messages"></div>
+          <div class="chat-input-bar">
+            <input type="text" id="vendor-chat-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')vendorSendMessage()"/>
+            <button class="btn-primary" onclick="vendorSendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- New PR Modal -->
+<div id="modal-pr" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-pr')">✕</button>
+    <h2>New Purchase Requisition</h2>
+    <form onsubmit="createPR(event)">
+      <div class="form-group"><label>Material Name *</label><input type="text" id="pr-material" placeholder="e.g. Laptop, Office Chair" required/></div>
+      <div class="form-row">
+        <div class="form-group"><label>Quantity *</label><input type="number" id="pr-qty" placeholder="0" min="1" required/></div>
+        <div class="form-group"><label>Unit</label><select id="pr-unit"><option>Units</option><option>Kg</option><option>Liters</option><option>Boxes</option><option>Sets</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Department *</label><select id="pr-dept" required><option value="">Select</option><option>IT</option><option>HR</option><option>Finance</option><option>Operations</option><option>Marketing</option></select></div>
+        <div class="form-group"><label>Priority</label><select id="pr-priority"><option>Normal</option><option>High</option><option>Urgent</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Required Date *</label><input type="date" id="pr-date" required/></div>
+        <div class="form-group"><label>Estimated Cost ($)</label><input type="number" id="pr-cost" placeholder="0.00" step="0.01"/></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="pr-desc" placeholder="Additional details..." rows="2"></textarea></div>
+      <button type="submit" class="btn-primary full">Submit PR</button>
+    </form>
+  </div>
+</div>
+
+<!-- Convert PR to PO Modal -->
+<div id="modal-po" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-po')">✕</button>
+    <h2>Convert PR to Purchase Order</h2>
+    <form onsubmit="createPO(event)">
+      <input type="hidden" id="po-pr-id"/>
+      <div class="form-group"><label>PR Details</label><div id="po-pr-details" class="info-box"></div></div>
+      <div class="form-group"><label>Select Vendor *</label>
+        <select id="po-vendor" required>
+          <option value="">Choose vendor...</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Unit Price ($) *</label><input type="number" id="po-price" placeholder="0.00" step="0.01" required oninput="calcTotal()"/></div>
+        <div class="form-group"><label>Total Amount</label><input type="text" id="po-total" readonly placeholder="Auto-calculated"/></div>
+      </div>
+      <div class="form-group"><label>Delivery Date *</label><input type="date" id="po-delivery" required/></div>
+      <div class="form-group"><label>Notes</label><textarea id="po-notes" rows="2" placeholder="Delivery instructions..."></textarea></div>
+      <button type="submit" class="btn-primary full">Create Purchase Order</button>
+    </form>
+  </div>
+</div>
+
+<!-- Rate Vendor Modal -->
+<div id="modal-rate" class="modal-overlay hidden">
+  <div class="modal small">
+    <button class="modal-close" onclick="closeModal('modal-rate')">✕</button>
+    <h2>Rate Vendor</h2>
+    <input type="hidden" id="rate-po-id"/>
+    <div class="form-group"><label>Select Rating</label>
+      <div class="star-rating" id="star-rating">
+        <span onclick="setRating(1)">★</span><span onclick="setRating(2)">★</span>
+        <span onclick="setRating(3)">★</span><span onclick="setRating(4)">★</span><span onclick="setRating(5)">★</span>
+      </div>
+      <input type="hidden" id="rating-val" value="0"/>
+    </div>
+    <div class="form-group"><label>Comment</label><textarea id="rate-comment" rows="2" placeholder="Your feedback..."></textarea></div>
+    <button class="btn-primary full" onclick="submitRating()">Submit Rating</button>
+  </div>
+</div>
+
+<!-- Invoice Modal (Vendor) -->
+<div id="modal-invoice" class="modal-overlay hidden">
+  <div class="modal small">
+    <button class="modal-close" onclick="closeModal('modal-invoice')">✕</button>
+    <h2>Submit Invoice</h2>
+    <input type="hidden" id="invoice-po-id"/>
+    <div class="form-group"><label>Invoice Number *</label><input type="text" id="inv-number" placeholder="INV-2024-001" required/></div>
+    <div class="form-group"><label>Amount ($) *</label><input type="number" id="inv-amount" placeholder="0.00" step="0.01" required/></div>
+    <div class="form-group"><label>Due Date *</label><input type="date" id="inv-due" required/></div>
+    <div class="form-group"><label>Notes</label><textarea id="inv-notes" rows="2" placeholder="Payment details..."></textarea></div>
+    <button class="btn-primary full" onclick="submitInvoice()">Submit Invoice</button>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
